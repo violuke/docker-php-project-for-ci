@@ -1,7 +1,7 @@
 FROM php:7.0
 MAINTAINER Luke Cousins <luke@cou.si>
-RUN apt-get update && \
-  apt-get install -y yqq git zip curl libicu-dev libcurl4-openssl-dev libfreetype6-dev libgd-dev \
+RUN apt-get update-yqq && \
+  apt-get install -yqq git zip curl libicu-dev libcurl4-openssl-dev libfreetype6-dev libgd-dev \
   && rm -r /var/lib/apt/lists/*
 
 # PHP Extensions
