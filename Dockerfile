@@ -1,7 +1,7 @@
 FROM php:7.0
 MAINTAINER Luke Cousins <luke@cou.si>
 RUN apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y yqq git zip curl libicu-dev libcurl4-openssl-dev libfreetype6-dev libgd-dev
+  DEBIAN_FRONTEND=noninteractive apt-get install -y yqq git zip curl libicu-dev libcurl4-openssl-dev libfreetype6-dev libgd-dev \
   && rm -r /var/lib/apt/lists/*
 
 # PHP Extensions
