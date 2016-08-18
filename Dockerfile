@@ -5,11 +5,17 @@ RUN apt-get update -yqq && \
   && rm -r /var/lib/apt/lists/*
 
 # PHP Extensions
-RUN docker-php-ext-install mcrypt zip bz2 mbstring pdo_mysql curl intl \
-  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-  && docker-php-ext-install gd \
-  && docker-php-ext-configure bcmath \
-  && docker-php-ext-install bcmath
+RUN docker-php-ext-install mcrypt
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install bz2
+RUN docker-php-ext-install mbstring
+RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install curl
+RUN docker-php-ext-install intl
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+RUN docker-php-ext-install gd
+RUN docker-php-ext-configure bcmath
+RUN docker-php-ext-install bcmath
   
 # Install Xdebug
 RUN curl -fsSL 'https://xdebug.org/files/xdebug-2.4.1.tgz' -o xdebug.tar.gz \
