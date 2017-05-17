@@ -16,8 +16,20 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-di
 RUN docker-php-ext-install gd
 RUN docker-php-ext-configure bcmath
 RUN docker-php-ext-install bcmath
-RUN pecl install apcu-5.1.8 && echo extension=apcu.so > /usr/local/etc/php/conf.d/apcu.ini
+
+# Old attempt
+#RUN pecl install apcu-5.1.8 && echo extension=apcu.so > /usr/local/etc/php/conf.d/apcu.ini
+#RUN docker-php-ext-enable apcu
+
+RUN pecl install apcu-5.1.8
 RUN docker-php-ext-enable apcu
+RUN pecl install apcu_bc-1.0.3
+RUN docker-php-ext-enable apc
+RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-apc.ini
+RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
+
+# Copy in APC config
+COPY php/*.ini /usr/local/etc/php/conf.d/
   
 # Install Xdebug
 RUN curl -fsSL 'https://xdebug.org/files/xdebug-2.4.1.tgz' -o xdebug.tar.gz \
@@ -52,3 +64,4 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # Display Composer version
 RUN composer --version
+
