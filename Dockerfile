@@ -1,62 +1,85 @@
-FROM php:7.1
+FROM ubuntu:16.04
 MAINTAINER Luke Cousins
-RUN apt-get update -yqq && \
-  apt-get install -yqq git zip curl libicu-dev libcurl4-openssl-dev libfreetype6-dev libgd-dev libmcrypt-dev libjpeg62-turbo-dev libpng12-dev libbz2-dev php-pear mysql-client libxml2-dev \
-  && rm -r /var/lib/apt/lists/*
 
-# PHP Extensions
-RUN docker-php-ext-install pdo_mysql
-RUN docker-php-ext-install curl
-RUN docker-php-ext-install intl
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
-RUN docker-php-ext-install gd
-RUN docker-php-ext-install json
-RUN docker-php-ext-install mbstring
-RUN docker-php-ext-install zip
-RUN docker-php-ext-install xml
-RUN docker-php-ext-install soap
-RUN docker-php-ext-configure bcmath
-RUN docker-php-ext-install bcmat
+RUN export LC_ALL=C.UTF-8
+RUN DEBIAN_FRONTEND=noninteractive
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-RUN pecl install apcu-5.1.8
-RUN docker-php-ext-enable apcu
-RUN pecl install apcu_bc-1.0.3
-RUN docker-php-ext-enable apc
-RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-apc.ini
-RUN rm -f /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
+RUN apt-get update
+RUN apt-get install -y \
+    autoconf \
+    autogen \
+    language-pack-en-base \
+    wget \
+    curl \
+    ssh \
+    rsync \
+    ssh \
+    openssh-client \
+    git \
+    build-essential \
+    apt-utils \
+    software-properties-common \
+    python-software-properties \
+    nasm \
+    libjpeg-dev \
+    libpng-dev
 
-# Copy in APC config
-COPY php/*.ini /usr/local/etc/php/conf.d/
+RUN wget -q -O /tmp/libpng12.deb http://mirrors.kernel.org/ubuntu/pool/main/libp/libpng/libpng12-0_1.2.54-1ubuntu1_amd64.deb \
+  && dpkg -i /tmp/libpng12.deb \
+  && rm /tmp/libpng12.deb
 
-# Install Xdebug
-RUN curl -fsSL 'https://xdebug.org/files/xdebug-2.4.1.tgz' -o xdebug.tar.gz \
-    && mkdir -p xdebug \
-    && tar -xf xdebug.tar.gz -C xdebug --strip-components=1 \
-    && rm xdebug.tar.gz \
-    && ( \
-    cd xdebug \
-    && phpize \
-    && ./configure --enable-xdebug \
-    && make -j$(nproc) \
-    && make install \
-    ) \
-    && rm -r xdebug \
-    && docker-php-ext-enable xdebug
+# PHP
+RUN LC_ALL=en_US.UTF-8 add-apt-repository ppa:ondrej/php
+RUN apt-get update ; apt-get install -y --allow-unauthenticated \
+    php7.1 \
+    php7.1-curl \
+    php7.1-gd \
+    php7.1-dev \
+    php7.1-xml \
+    php7.1-bcmath \
+    php7.1-mysql \
+    php7.1-mbstring \
+    php7.1-zip \
+    php7.1-sqlite \
+    php7.1-soap \
+    php7.1-json \
+    php7.1-intl \
+    php-xdebug \
+    php-apcu
+RUN command -v php
+RUN echo "apc.enable_cli=1" | tee -a /etc/php/7.1/mods-available/apcu.ini
 
-# Memory Limit
-RUN echo "memory_limit=-1" > $PHP_INI_DIR/conf.d/memory-limit.ini
+# Composer
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
+    php -r "if (hash_file('SHA384', 'composer-setup.php') === '669656bab3166a7aff8a7506b8cb2d1c292f042046c5a994c43155c0be6190fa0355160742ab2e1c88d40d5be660b410') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+    php composer-setup.php && \
+    php -r "unlink('composer-setup.php');" && \
+    mv composer.phar /usr/local/bin/composer && \
+    chmod +x /usr/local/bin/composer && \
+    composer self-update --preview
+RUN command -v composer
 
-# Time Zone
-RUN echo "date.timezone=Europe/London" > $PHP_INI_DIR/conf.d/date_timezone.ini
+# PHPUnit
+RUN wget https://phar.phpunit.de/phpunit.phar
+RUN chmod +x phpunit.phar
+RUN mv phpunit.phar /usr/local/bin/phpunit
+RUN command -v phpunit
 
-# do not use short tags as they cause phpunit.xml.dist to be parsed as PHP
-RUN echo "short_open_tag=Off" > $PHP_INI_DIR/conf.d/short_tags.ini
+# Node.js
+RUN curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
+RUN bash nodesource_setup.sh
+RUN apt-get install nodejs -y
+RUN command -v node
+RUN command -v npm
 
-# Display PHP version
-RUN php --version
+# Other
+RUN mkdir ~/.ssh
+RUN touch ~/.ssh_config
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Display Composer version
+# Display versions installed
+RUN php -v
 RUN composer --version
+RUN phpunit --version
+RUN node -v
+RUN npm -v
